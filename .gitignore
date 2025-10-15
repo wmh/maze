@@ -1,0 +1,23 @@
+# 編譯產物
+maze
+*.o
+*.out
+
+# 生成的檔案（保留範例）
+# maze.svg
+# maze.html
+
+# 編輯器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系統檔案
+.DS_Store
+Thumbs.db
+
+# 臨時檔案
+*.tmp
+*.bak
