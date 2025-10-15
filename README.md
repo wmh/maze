@@ -2,8 +2,15 @@
 
 一個功能完整的迷宮產生專案，包含網頁版和 C 語言命令列版本，支援隨機迷宮生成與列印輸出。
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Language](https://img.shields.io/badge/language-C%20%7C%20JavaScript-orange.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Language](https://img.shields.io/badge/language-C%20%7C%20JavaScript-orange.svg)](https://github.com/wmh/maze)
+[![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://wmh.github.io/maze/)
+
+## 🌐 線上體驗
+
+**立即試玩：** [https://wmh.github.io/maze/](https://wmh.github.io/maze/)
+
+無需安裝，直接在瀏覽器中體驗迷宮產生器！
 
 ## ✨ 功能特點
 
@@ -27,12 +34,18 @@
 
 ### 網頁版
 
+**方法一：線上使用（推薦）**
+
+直接訪問 GitHub Pages：[https://wmh.github.io/maze/](https://wmh.github.io/maze/)
+
+**方法二：本地使用**
+
 1. 直接用瀏覽器開啟 `index.html`
 2. 輸入想要的寬度和高度
 3. 點擊「產生迷宮」按鈕
 
 ```bash
-# 或使用命令列開啟
+# 使用命令列開啟
 xdg-open index.html  # Linux
 open index.html      # macOS
 start index.html     # Windows
