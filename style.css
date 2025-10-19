@@ -117,6 +117,11 @@ button:active {
     width: 20px;
     height: 20px;
     border: none;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
 }
 
 .maze-cell.wall {
@@ -129,10 +134,12 @@ button:active {
 
 .maze-cell.start {
     background-color: #4CAF50;
+    color: white;
 }
 
 .maze-cell.end {
     background-color: #f44336;
+    color: white;
 }
 
 .print-only {
@@ -233,6 +240,11 @@ button:active {
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        font-size: 8pt !important;
+        font-weight: bold !important;
+        line-height: 5mm !important;
     }
     
     .maze-cell.wall {
@@ -245,9 +257,11 @@ button:active {
     
     .maze-cell.start {
         background-color: #4CAF50 !important;
+        color: white !important;
     }
     
     .maze-cell.end {
         background-color: #f44336 !important;
+        color: white !important;
     }
 }

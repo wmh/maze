@@ -135,9 +135,11 @@ function renderMaze(maze) {
                     break;
                 case 2:
                     cell.classList.add('start');
+                    cell.textContent = '起';
                     break;
                 case 3:
                     cell.classList.add('end');
+                    cell.textContent = '終';
                     break;
             }
             
