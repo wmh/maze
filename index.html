@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>迷宮產生器</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
     <div class="container">
@@ -12,15 +12,24 @@
         <div class="controls">
             <div class="input-group">
                 <label for="width">寬度:</label>
-                <input type="number" id="width" min="5" max="50" value="20">
+                <input type="number" id="width" min="5" max="50" value="30">
             </div>
             <div class="input-group">
                 <label for="height">高度:</label>
-                <input type="number" id="height" min="5" max="50" value="20">
+                <input type="number" id="height" min="5" max="50" value="40">
+            </div>
+            <div class="input-group">
+                <label for="seed">種子碼:</label>
+                <input type="text" id="seed" placeholder="留空隨機生成">
             </div>
             <button id="generateBtn">產生迷宮</button>
+            <button id="printBtn">🖨️ 列印</button>
         </div>
+        <div id="seedDisplay" class="seed-display"></div>
         <div id="maze"></div>
+        <div class="print-only footer">
+            <p>線上產生器: https://wmh.github.io/maze/</p>
+        </div>
     </div>
     <script src="maze.js"></script>
 </body>

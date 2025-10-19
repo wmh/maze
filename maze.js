@@ -1,7 +1,25 @@
+// 簡單的隨機數生成器（用於種子碼）
+class SeededRandom {
+    constructor(seed) {
+        this.seed = seed;
+    }
+    
+    next() {
+        this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff;
+        return this.seed;
+    }
+    
+    nextInt(max) {
+        return this.next() % max;
+    }
+}
+
 class MazeGenerator {
-    constructor(width, height) {
+    constructor(width, height, seed = null) {
         this.width = width;
         this.height = height;
+        this.seed = seed || Date.now();
+        this.rng = new SeededRandom(this.seed);
         this.maze = [];
         this.initialize();
     }
@@ -17,58 +35,81 @@ class MazeGenerator {
     }
 
     generate() {
-        // 使用遞迴回溯算法 (Recursive Backtracking)
-        const startX = 1;
-        const startY = 1;
-        this.maze[startY][startX] = 0; // 0 = 路徑
-        this.carvePassages(startX, startY);
+        // 使用改良的演算法（迭代式 DFS + 隨機回溯）
+        const stack = [];
+        const visited = Array(this.height).fill(0).map(() => Array(this.width).fill(false));
+        
+        // 從起點開始
+        let x = 1, y = 1;
+        this.maze[y][x] = 0;
+        visited[y][x] = true;
+        stack.push({x, y});
+        
+        const directions = [[0, -2], [2, 0], [0, 2], [-2, 0]];
+        
+        while (stack.length > 0) {
+            // 隨機選擇回溯點（增加分岔複雜度）
+            let stackPos;
+            if (stack.length > 10 && this.rng.nextInt(100) < 30) {
+                // 30% 機率跳回較早的位置
+                stackPos = this.rng.nextInt(stack.length);
+            } else {
+                // 70% 使用最新位置
+                stackPos = stack.length - 1;
+            }
+            
+            const current = stack[stackPos];
+            x = current.x;
+            y = current.y;
+            
+            // 找到所有未訪問的相鄰格子
+            const unvisited = [];
+            for (let [dx, dy] of directions) {
+                const newX = x + dx;
+                const newY = y + dy;
+                
+                if (this.isValid(newX, newY) && !visited[newY][newX]) {
+                    unvisited.push({dx, dy});
+                }
+            }
+            
+            if (unvisited.length > 0) {
+                // 隨機選擇一個方向
+                const choice = unvisited[this.rng.nextInt(unvisited.length)];
+                const dx = choice.dx;
+                const dy = choice.dy;
+                const newX = x + dx;
+                const newY = y + dy;
+                
+                // 打通牆
+                this.maze[y + dy / 2][x + dx / 2] = 0;
+                this.maze[newY][newX] = 0;
+                visited[newY][newX] = true;
+                
+                // 加入新格子到棧
+                stack.push({x: newX, y: newY});
+            } else {
+                // 沒有未訪問的鄰居，從棧中移除
+                stack[stackPos] = stack[stack.length - 1];
+                stack.pop();
+            }
+        }
         
         // 設置起點和終點
         this.maze[1][1] = 2; // 2 = 起點
         this.maze[this.height - 2][this.width - 2] = 3; // 3 = 終點
     }
 
-    carvePassages(x, y) {
-        // 四個方向：上、右、下、左
-        const directions = [
-            [0, -2], // 上
-            [2, 0],  // 右
-            [0, 2],  // 下
-            [-2, 0]  // 左
-        ];
-        
-        // 隨機打亂方向
-        this.shuffle(directions);
-        
-        for (let [dx, dy] of directions) {
-            const newX = x + dx;
-            const newY = y + dy;
-            
-            // 檢查新位置是否在迷宮範圍內且是牆
-            if (this.isValid(newX, newY) && this.maze[newY][newX] === 1) {
-                // 打通當前格子到新格子之間的牆
-                this.maze[y + dy / 2][x + dx / 2] = 0;
-                this.maze[newY][newX] = 0;
-                
-                // 遞迴處理新格子
-                this.carvePassages(newX, newY);
-            }
-        }
-    }
-
     isValid(x, y) {
         return x > 0 && x < this.width - 1 && y > 0 && y < this.height - 1;
     }
 
-    shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
     getMaze() {
         return this.maze;
+    }
+    
+    getSeed() {
+        return this.seed;
     }
 }
 
@@ -111,20 +152,32 @@ function renderMaze(maze) {
 function generateMaze() {
     const width = parseInt(document.getElementById('width').value);
     const height = parseInt(document.getElementById('height').value);
+    const seedInput = document.getElementById('seed').value.trim();
     
     // 確保尺寸為奇數（對於遞迴回溯算法）
     const adjustedWidth = width % 2 === 0 ? width + 1 : width;
     const adjustedHeight = height % 2 === 0 ? height + 1 : height;
     
-    const generator = new MazeGenerator(adjustedWidth, adjustedHeight);
+    // 如果有輸入種子碼，使用該種子；否則使用時間戳
+    const seed = seedInput ? parseInt(seedInput) : null;
+    
+    const generator = new MazeGenerator(adjustedWidth, adjustedHeight, seed);
     generator.generate();
     const maze = generator.getMaze();
+    const usedSeed = generator.getSeed();
+    
+    // 顯示使用的種子碼
+    document.getElementById('seedDisplay').textContent = `當前種子碼: ${usedSeed}`;
+    document.getElementById('seed').value = usedSeed;
     
     renderMaze(maze);
 }
 
 // 事件監聽器
 document.getElementById('generateBtn').addEventListener('click', generateMaze);
+document.getElementById('printBtn').addEventListener('click', () => {
+    window.print();
+});
 
 // 頁面載入時生成初始迷宮
 window.addEventListener('load', generateMaze);

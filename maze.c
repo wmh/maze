@@ -5,17 +5,39 @@
 
 #define MAX_SIZE 100
 
+// 簡單的 LCG 隨機數生成器（用於種子碼）
+typedef struct {
+    unsigned int seed;
+} RandomGenerator;
+
+RandomGenerator global_rng;
+
+void init_random(unsigned int seed) {
+    global_rng.seed = seed;
+}
+
+int next_random() {
+    global_rng.seed = (1103515245 * global_rng.seed + 12345) & 0x7fffffff;
+    return global_rng.seed;
+}
+
+int random_range(int max) {
+    return next_random() % max;
+}
+
 typedef struct {
     int width;
     int height;
     int** grid;
+    unsigned int seed;  // 種子碼
 } Maze;
 
 // 初始化迷宮
-Maze* create_maze(int width, int height) {
+Maze* create_maze(int width, int height, unsigned int seed) {
     Maze* maze = (Maze*)malloc(sizeof(Maze));
     maze->width = width;
     maze->height = height;
+    maze->seed = seed;
     
     // 分配二維陣列
     maze->grid = (int**)malloc(height * sizeof(int*));
@@ -25,6 +47,9 @@ Maze* create_maze(int width, int height) {
             maze->grid[i][j] = 1; // 1 = 牆
         }
     }
+    
+    // 初始化隨機數生成器
+    init_random(seed);
     
     return maze;
 }
@@ -38,10 +63,10 @@ void free_maze(Maze* maze) {
     free(maze);
 }
 
-// 打亂陣列（Fisher-Yates shuffle）
+// 打亂陣列（Fisher-Yates shuffle，使用自訂隨機數）
 void shuffle(int arr[][2], int n) {
     for (int i = n - 1; i > 0; i--) {
-        int j = rand() % (i + 1);
+        int j = random_range(i + 1);
         int temp0 = arr[i][0], temp1 = arr[i][1];
         arr[i][0] = arr[j][0];
         arr[i][1] = arr[j][1];
@@ -50,35 +75,92 @@ void shuffle(int arr[][2], int n) {
     }
 }
 
-// 遞迴回溯生成迷宮
-void carve_passages(Maze* maze, int x, int y) {
-    int directions[4][2] = {{0, -2}, {2, 0}, {0, 2}, {-2, 0}};
-    shuffle(directions, 4);
+// 使用改良的演算法生成更複雜的迷宮（迭代式 + 隨機回溯）
+void generate_maze(Maze* maze) {
+    // 使用棧實現迭代式 DFS，並隨機選擇回溯點
+    typedef struct {
+        int x, y;
+    } Point;
     
-    for (int i = 0; i < 4; i++) {
-        int dx = directions[i][0];
-        int dy = directions[i][1];
-        int newX = x + dx;
-        int newY = y + dy;
+    Point* stack = (Point*)malloc(maze->width * maze->height * sizeof(Point));
+    int stack_size = 0;
+    
+    // 標記訪問過的格子
+    int** visited = (int**)malloc(maze->height * sizeof(int*));
+    for (int i = 0; i < maze->height; i++) {
+        visited[i] = (int*)calloc(maze->width, sizeof(int));
+    }
+    
+    // 從起點開始
+    int x = 1, y = 1;
+    maze->grid[y][x] = 0;
+    visited[y][x] = 1;
+    stack[stack_size++] = (Point){x, y};
+    
+    int directions[4][2] = {{0, -2}, {2, 0}, {0, 2}, {-2, 0}};
+    
+    while (stack_size > 0) {
+        // 隨機選擇回溯點（而非總是最新的），增加分岔複雜度
+        int stack_pos;
+        if (stack_size > 10 && random_range(100) < 30) {
+            // 30% 機率跳回較早的位置，創造更多分岔
+            stack_pos = random_range(stack_size);
+        } else {
+            // 70% 使用最新位置（標準 DFS）
+            stack_pos = stack_size - 1;
+        }
         
-        // 檢查是否在範圍內且是牆
-        if (newX > 0 && newX < maze->width - 1 && 
-            newY > 0 && newY < maze->height - 1 && 
-            maze->grid[newY][newX] == 1) {
+        Point current = stack[stack_pos];
+        x = current.x;
+        y = current.y;
+        
+        // 找到所有未訪問的相鄰格子
+        int unvisited[4][2];
+        int unvisited_count = 0;
+        
+        for (int i = 0; i < 4; i++) {
+            int dx = directions[i][0];
+            int dy = directions[i][1];
+            int newX = x + dx;
+            int newY = y + dy;
+            
+            if (newX > 0 && newX < maze->width - 1 && 
+                newY > 0 && newY < maze->height - 1 && 
+                !visited[newY][newX]) {
+                unvisited[unvisited_count][0] = dx;
+                unvisited[unvisited_count][1] = dy;
+                unvisited_count++;
+            }
+        }
+        
+        if (unvisited_count > 0) {
+            // 隨機選擇一個方向
+            int choice = random_range(unvisited_count);
+            int dx = unvisited[choice][0];
+            int dy = unvisited[choice][1];
+            int newX = x + dx;
+            int newY = y + dy;
             
             // 打通牆
             maze->grid[y + dy/2][x + dx/2] = 0;
             maze->grid[newY][newX] = 0;
+            visited[newY][newX] = 1;
             
-            carve_passages(maze, newX, newY);
+            // 加入新格子到棧
+            stack[stack_size++] = (Point){newX, newY};
+        } else {
+            // 沒有未訪問的鄰居，從棧中移除
+            stack[stack_pos] = stack[stack_size - 1];
+            stack_size--;
         }
     }
-}
-
-// 生成迷宮
-void generate_maze(Maze* maze) {
-    maze->grid[1][1] = 0;
-    carve_passages(maze, 1, 1);
+    
+    // 清理
+    free(stack);
+    for (int i = 0; i < maze->height; i++) {
+        free(visited[i]);
+    }
+    free(visited);
     
     // 設置起點和終點
     maze->grid[1][1] = 2; // 起點
@@ -306,6 +388,7 @@ void export_html(Maze* maze, const char* svg_filename, const char* html_filename
     fprintf(fp, "        <h1>🎯 迷宮挑戰</h1>\n");
     fprintf(fp, "        <div class=\"info\">\n");
     fprintf(fp, "            <span>尺寸: %d × %d</span>\n", maze->width, maze->height);
+    fprintf(fp, "            <span>種子碼: %u</span>\n", maze->seed);
     fprintf(fp, "            <span>生成時間: %s</span>\n", datetime);
     fprintf(fp, "        </div>\n");
     fprintf(fp, "        <div class=\"legend\">\n");
@@ -342,12 +425,13 @@ void export_html(Maze* maze, const char* svg_filename, const char* html_filename
 }
 
 int main(int argc, char* argv[]) {
-    int width = 31;
-    int height = 41;
+    int width = 30;
+    int height = 40;
+    unsigned int seed = 0;  // 0 表示使用時間作為種子
     char svg_filename[256] = "maze.svg";
     char html_filename[256] = "maze.html";
     
-    // 解析命令列參數
+    // 解析命令列參數: ./maze [width] [height] [seed] [filename]
     if (argc >= 2) {
         width = atoi(argv[1]);
     }
@@ -355,7 +439,10 @@ int main(int argc, char* argv[]) {
         height = atoi(argv[2]);
     }
     if (argc >= 4) {
-        strncpy(svg_filename, argv[3], sizeof(svg_filename) - 1);
+        seed = (unsigned int)atoi(argv[3]);
+    }
+    if (argc >= 5) {
+        strncpy(svg_filename, argv[4], sizeof(svg_filename) - 1);
         // 自動產生對應的 HTML 檔名
         snprintf(html_filename, sizeof(html_filename), "%s", svg_filename);
         char* dot = strrchr(html_filename, '.');
@@ -376,13 +463,15 @@ int main(int argc, char* argv[]) {
     if (width > MAX_SIZE) width = MAX_SIZE;
     if (height > MAX_SIZE) height = MAX_SIZE;
     
-    printf("產生迷宮：%d x %d\n", width, height);
+    // 如果沒有指定種子，使用時間
+    if (seed == 0) {
+        seed = (unsigned int)time(NULL);
+    }
     
-    // 初始化隨機數
-    srand(time(NULL));
+    printf("產生迷宮：%d x %d (種子: %u)\n", width, height, seed);
     
     // 建立並生成迷宮
-    Maze* maze = create_maze(width, height);
+    Maze* maze = create_maze(width, height, seed);
     generate_maze(maze);
     
     // 輸出 SVG
@@ -395,6 +484,7 @@ int main(int argc, char* argv[]) {
     free_maze(maze);
     
     printf("完成！開啟 %s 即可預覽和列印\n", html_filename);
+    printf("使用種子 %u 可重現此迷宮\n", seed);
     
     return 0;
 }

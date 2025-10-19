@@ -58,9 +58,25 @@ h1 {
     transition: border-color 0.3s;
 }
 
+.input-group input[type="text"] {
+    width: 150px;
+}
+
 .input-group input:focus {
     outline: none;
     border-color: #667eea;
+}
+
+.seed-display {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #667eea;
+    font-size: 14px;
 }
 
 button {
@@ -117,4 +133,121 @@ button:active {
 
 .maze-cell.end {
     background-color: #f44336;
+}
+
+.print-only {
+    display: none;
+}
+
+/* 列印樣式 - 必須放在最後 */
+@media print {
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+    
+    body {
+        background: white !important;
+        padding: 0 !important;
+        display: block !important;
+        min-height: 0 !important;
+    }
+    
+    .container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+        background: white !important;
+    }
+    
+    .controls {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+    
+    .footer {
+        margin-top: 10mm !important;
+        padding-top: 5mm !important;
+        border-top: 1px solid #ddd !important;
+        text-align: center !important;
+        font-size: 10pt !important;
+        color: #666 !important;
+    }
+    
+    .footer p {
+        margin: 0 !important;
+    }
+    
+    h1 {
+        margin-bottom: 5mm !important;
+        font-size: 18pt !important;
+        page-break-after: avoid !important;
+        display: block !important;
+    }
+    
+    .seed-display {
+        margin-bottom: 5mm !important;
+        background: white !important;
+        border: 1px solid #ddd !important;
+        page-break-after: avoid !important;
+        font-size: 10pt !important;
+        display: block !important;
+    }
+    
+    #maze {
+        display: block !important;
+        border: 2px solid #333 !important;
+        page-break-inside: avoid !important;
+        margin: 0 auto 5mm auto !important;
+        width: fit-content !important;
+        background: white !important;
+    }
+    
+    .maze-table {
+        page-break-inside: avoid !important;
+        display: table !important;
+        border-collapse: collapse !important;
+        margin: 0 auto !important;
+    }
+    
+    .maze-table tr {
+        display: table-row !important;
+    }
+    
+    .maze-table td {
+        display: table-cell !important;
+    }
+    
+    .maze-cell {
+        width: 5mm !important;
+        height: 5mm !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .maze-cell.wall {
+        background-color: #333 !important;
+    }
+    
+    .maze-cell.path {
+        background-color: #fff !important;
+    }
+    
+    .maze-cell.start {
+        background-color: #4CAF50 !important;
+    }
+    
+    .maze-cell.end {
+        background-color: #f44336 !important;
+    }
 }
